@@ -1,5 +1,4 @@
-import javafx.util.Pair;
-
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
@@ -17,19 +16,27 @@ public class AgglomerativeClustering <T extends Clusterable<T>> implements Clust
 	public Set<Set<T>> clusterSet(Set<T> elements) {
 
 		this.clusters = elements.stream().map(item->fromItemToSet(item)).collect(Collectors.toSet());
+
 		while (clusters.size() != 1) {
-			Pair<Set<T>,Set<T>>myPair = clusters.stream()
+			ArrayList<Set<T>> myPair = clusters.stream()
 					.flatMap(s1->clusters.stream()
 							.filter(s2->!s2.equals(s1))
-							.map(s2->new Pair<Set<T>,Set<T>>(s1,s2)))
-					.min(Comparator.comparing(s->setsDistance(s.getKey(),s.getValue())))
+							.map(s2->{
+								ArrayList<Set<T>> p = new ArrayList<>();
+								p.add(s1);
+								p.add(s2);
+								return p;
+								}))
+					.min(Comparator.comparing(p->setsDistance(p.get(0),p.get(1))))
 					.orElse(null);
-			if(setsDistance(myPair.getKey(),myPair.getValue())>this.threshold)
+
+			if(setsDistance(myPair.get(0),myPair.get(1))>this.threshold)
 				return clusters;
-			clusters.remove(myPair.getKey());
-			clusters.remove(myPair.getValue());
-			myPair.getKey().addAll(myPair.getValue());
-			clusters.add(myPair.getKey());
+
+			clusters.remove(myPair.get(0));
+			clusters.remove(myPair.get(1));
+			myPair.get(0).addAll(myPair.get(1));
+			clusters.add(myPair.get(0));
 		}
 
 		return clusters;
